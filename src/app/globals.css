@@ -1,27 +1,15 @@
 @import "tailwindcss";
 
-/* RemittEase theme tokens (purple → pink) */
-@layer base {
-  :root {
-    --re-primary: 124 58 237; /* purple */
-    --re-accent: 236 72 153; /* pink */
-    --re-bg0: 7 10 20;       /* deep navy */
-    --re-bg1: 11 16 32;      /* navy */
-    --re-text: 241 245 249;  /* slate-50 */
-    --re-muted: 148 163 184; /* slate-400 */
-    --re-border: 255 255 255;
-  }
+:root{
+  --re-bg: 7 7 10;
+  --re-card: 255 255 255;
+  --re-border: 255 255 255;
+  --re-primary1: 99 102 241;   /* indigo */
+  --re-primary2: 236 72 153;   /* pink */
+}
 
-  html,
-  body {
-    height: 100%;
-  }
-
-  body {
-    color: rgb(var(--re-text));
-    background:
-      radial-gradient(900px 500px at 20% 10%, rgba(124, 58, 237, 0.25), transparent 60%),
-      radial-gradient(900px 500px at 80% 20%, rgba(236, 72, 153, 0.18), transparent 60%),
-      linear-gradient(180deg, rgb(var(--re-bg1)), rgb(var(--re-bg0)));
-  }
+html, body { height: 100%; }
+body {
+  background: rgb(var(--re-bg));
+  color: white;
 }
