@@ -6,7 +6,7 @@ import { PannaProvider } from "panna-sdk/react";
 export function Providers({ children }: { children: React.ReactNode }) {
   const clientId = process.env.NEXT_PUBLIC_CLIENT_ID!;
   const partnerId = process.env.NEXT_PUBLIC_PARTNER_ID!;
-  const chainId = process.env.NEXT_PUBLIC_CHAIN_ID ?? "4202";
+  const chainId = process.env.NEXT_PUBLIC_CHAIN_ID ?? "4202"; // ✅ string
 
   if (!clientId || !partnerId) {
     throw new Error("Missing NEXT_PUBLIC_CLIENT_ID or NEXT_PUBLIC_PARTNER_ID");
