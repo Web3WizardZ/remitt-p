@@ -1,95 +1,133 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { prepareTransaction, sendTransaction, toWei } from "thirdweb";
-import { useActiveAccount } from "thirdweb/react";
+import React, { useMemo, useState } from "react";
+import { prepareTransaction, sendTransaction } from "thirdweb";
+import { toWei } from "thirdweb/utils";
+import { getContract } from "thirdweb";
+import { transfer } from "thirdweb/extensions/erc20";
+import { appChain, thirdwebClient } from "@/lib/thirdweb";
+import type { AppToken } from "@/lib/tokens";
 
-import { thirdwebClient } from "@/lib/thirdweb/client";
-import { lisk } from "@/lib/thirdweb/chains";
-
-export default function SendSheet() {
-  const account = useActiveAccount();
+export function SendSheet({
+  account,
+  tokens,
+}: {
+  account: any; // Panna account object (thirdweb Account-compatible)
+  tokens: AppToken[];
+}) {
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
-  const [isSending, setIsSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [asset, setAsset] = useState<string>("__NATIVE__");
+  const [busy, setBusy] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const canSend = useMemo(() => {
-    if (!account) return false;
-    if (!to || to.length < 10) return false;
-    const n = Number(amount);
-    return Number.isFinite(n) && n > 0;
-  }, [account, to, amount]);
+  const selected = useMemo(() => {
+    if (asset === "__NATIVE__") return null;
+    return tokens.find((t) => t.address?.toLowerCase() === asset.toLowerCase()) ?? null;
+  }, [asset, tokens]);
 
   async function onSend() {
+    setError(null);
+    setTxHash(null);
+
+    if (!account?.address) return setError("Please sign in first.");
+    if (!to || !to.startsWith("0x") || to.length < 10) return setError("Enter a valid recipient address.");
+    if (!amount || Number(amount) <= 0) return setError("Enter a valid amount.");
+
+    setBusy(true);
     try {
-      setError(null);
-      setTxHash(null);
+      // Native send (no wallet UI)
+      if (!selected?.address) {
+        const tx = prepareTransaction({
+          client: thirdwebClient,
+          chain: appChain,
+          to,
+          value: toWei(amount),
+        });
 
-      if (!account) throw new Error("Please sign in first.");
-      if (!canSend) throw new Error("Enter a valid recipient and amount.");
+        const res = await sendTransaction({ transaction: tx, account });
+        setTxHash(res.transactionHash);
+        return;
+      }
 
-      setIsSending(true);
-
-      const tx = prepareTransaction({
+      // ERC20 send (no wallet UI)
+      const contract = getContract({
         client: thirdwebClient,
-        chain: lisk,
+        chain: appChain,
+        address: selected.address,
+      });
+
+      const tx = transfer({
+        contract,
         to,
-        value: toWei(amount), // amount as string -> bigint
+        amount, // string is supported in examples
       });
 
-      const result = await sendTransaction({
-        account,
-        transaction: tx,
-      });
-
-      setTxHash(result.transactionHash);
+      const res = await sendTransaction({ transaction: tx, account });
+      setTxHash(res.transactionHash);
     } catch (e: any) {
-      setError(e?.message ?? "Failed to send.");
+      setError(e?.message ?? "Send failed.");
     } finally {
-      setIsSending(false);
+      setBusy(false);
     }
   }
 
   return (
-    <div className="p-4">
-      <h2 className="text-lg font-semibold">Send</h2>
-
-      <div className="mt-4 space-y-3">
-        <div>
-          <label className="text-sm opacity-80">Recipient</label>
-          <input
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            placeholder="0x..."
-            className="mt-1 w-full rounded-xl bg-white/5 px-3 py-2 outline-none"
-          />
-        </div>
-
-        <div>
-          <label className="text-sm opacity-80">Amount</label>
-          <input
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="0.01"
-            className="mt-1 w-full rounded-xl bg-white/5 px-3 py-2 outline-none"
-          />
-        </div>
-
-        <button
-          onClick={onSend}
-          disabled={!canSend || isSending}
-          className="w-full rounded-xl bg-white text-black py-2 font-medium disabled:opacity-50"
+    <div className="space-y-3">
+      <div className="space-y-1">
+        <label className="text-xs text-white/70">Asset</label>
+        <select
+          value={asset}
+          onChange={(e) => setAsset(e.target.value)}
+          className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
         >
-          {isSending ? "Sending..." : "Send"}
-        </button>
-
-        {error && <p className="text-sm text-red-400">{error}</p>}
-        {txHash && (
-          <p className="text-sm opacity-80 break-all">Tx: {txHash}</p>
-        )}
+          <option value="__NATIVE__">Native</option>
+          {tokens
+            .filter((t) => t.address)
+            .map((t) => (
+              <option key={t.address} value={t.address}>
+                {t.symbol}
+              </option>
+            ))}
+        </select>
       </div>
+
+      <div className="space-y-1">
+        <label className="text-xs text-white/70">Recipient</label>
+        <input
+          value={to}
+          onChange={(e) => setTo(e.target.value)}
+          placeholder="0x..."
+          className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
+        />
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-xs text-white/70">Amount</label>
+        <input
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="0.00"
+          className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
+        />
+      </div>
+
+      <button
+        disabled={busy}
+        onClick={onSend}
+        className="w-full rounded-2xl bg-[linear-gradient(90deg,rgba(255,0,199,0.9),rgba(120,0,255,0.9))] px-4 py-3 text-sm font-semibold disabled:opacity-60"
+      >
+        {busy ? "Sending…" : "Send"}
+      </button>
+
+      {error && <div className="text-xs text-red-300">{error}</div>}
+      {txHash && (
+        <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs">
+          <div className="text-white/70">Transaction sent</div>
+          <div className="mt-1 break-all text-white">{txHash}</div>
+        </div>
+      )}
     </div>
   );
 }

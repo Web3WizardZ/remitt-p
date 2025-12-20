@@ -1,12 +1,12 @@
 "use client";
 
-import type { ReactNode } from "react";
+import React from "react";
 import { PannaProvider } from "panna-sdk/react";
 
-export default function Providers({ children }: { children: ReactNode }) {
+export default function Providers({ children }: { children: React.ReactNode }) {
   const clientId = process.env.NEXT_PUBLIC_CLIENT_ID!;
   const partnerId = process.env.NEXT_PUBLIC_PARTNER_ID!;
-  const chainId = process.env.NEXT_PUBLIC_CHAIN_ID ?? "1135"; // ✅ string
+  const chainId = process.env.NEXT_PUBLIC_CHAIN_ID ?? "1135"; // MUST be string for PannaProviderProps
 
   return (
     <PannaProvider clientId={clientId} partnerId={partnerId} chainId={chainId}>

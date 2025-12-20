@@ -1,22 +1,17 @@
-import "./globals.css";
 import type { Metadata } from "next";
-import BrandBackground from "@/components/BrandBackground";
+import "./globals.css";
 import Providers from "./providers";
 
-
 export const metadata: Metadata = {
-  title: "RemittEase",
-  description: "Send money globally with ease",
+  title: process.env.NEXT_PUBLIC_APP_NAME ?? "RemittEase",
+  description: process.env.NEXT_PUBLIC_APP_DESCRIPTION ?? "Send money globally with ease",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <Providers>
-          <BrandBackground />
-          {children}
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
