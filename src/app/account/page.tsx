@@ -75,7 +75,7 @@ export default function AccountPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Image src="/RE-icon.png" alt="RemittEase" width={36} height={36} className="rounded-xl" />
+            <Image src="/RE icon.png" alt="RemittEase" width={36} height={36} className="rounded-xl" />
             <div>
               <div className="text-sm font-semibold">RemittEase</div>
               <div className="text-[11px] text-white/65">Send money globally with ease</div>
