@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import Image from "next/image";
-import  BrandBackground  from "@/components/BrandBackground";
+import { BrandBackground }  from "@/components/BrandBackground";
 import { BottomSheet } from "@/components/sheets/BottomSheet";
 import { SendSheet } from "@/components/sheets/SendSheet";
 import { ReceiveSheet } from "@/components/sheets/ReceiveSheet";
