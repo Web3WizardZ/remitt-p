@@ -1,15 +1,13 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "panna-sdk/styles.css";
 
-:root{
-  --re-bg: 7 7 10;
-  --re-card: 255 255 255;
-  --re-border: 255 255 255;
-  --re-primary1: 99 102 241;   /* indigo */
-  --re-primary2: 236 72 153;   /* pink */
+/* Your RemittEase background + typography can live below */
+:root {
+  color-scheme: dark;
 }
 
-html, body { height: 100%; }
+html,
 body {
-  background: rgb(var(--re-bg));
-  color: white;
+  height: 100%;
 }

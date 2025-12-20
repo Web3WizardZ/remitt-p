@@ -1,59 +1,86 @@
 "use client";
 
-import React from "react";
+import { useEffect, useRef } from "react";
 
-const PARTICLES = [
-  { left: "8%", top: "18%", size: 3, delay: "0s" },
-  { left: "18%", top: "62%", size: 2, delay: "0.4s" },
-  { left: "28%", top: "28%", size: 2, delay: "0.8s" },
-  { left: "42%", top: "12%", size: 3, delay: "0.2s" },
-  { left: "54%", top: "40%", size: 2, delay: "0.6s" },
-  { left: "66%", top: "18%", size: 2, delay: "0.1s" },
-  { left: "78%", top: "52%", size: 3, delay: "0.9s" },
-  { left: "86%", top: "22%", size: 2, delay: "0.3s" },
-  { left: "14%", top: "86%", size: 3, delay: "0.7s" },
-  { left: "62%", top: "84%", size: 2, delay: "0.5s" },
-];
+export function RemittEaseBackground() {
+  const ref = useRef<HTMLCanvasElement | null>(null);
 
-export function BrandBackground({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="relative min-h-dvh overflow-hidden bg-[#05010f] text-white">
-      {/* soft gradient mesh */}
-      <div className="pointer-events-none absolute inset-0 opacity-90">
-        <div className="absolute -top-40 -left-40 h-[520px] w-[520px] rounded-full blur-3xl bg-[radial-gradient(circle_at_center,rgba(255,0,199,0.30),transparent_60%)]" />
-        <div className="absolute top-10 -right-40 h-[520px] w-[520px] rounded-full blur-3xl bg-[radial-gradient(circle_at_center,rgba(0,255,255,0.20),transparent_60%)]" />
-        <div className="absolute bottom-[-240px] left-1/2 h-[620px] w-[620px] -translate-x-1/2 rounded-full blur-3xl bg-[radial-gradient(circle_at_center,rgba(120,0,255,0.25),transparent_60%)]" />
-      </div>
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
 
-      {/* particles */}
-      <div className="pointer-events-none absolute inset-0">
-        {PARTICLES.map((p, i) => (
-          <span
-            key={i}
-            className="absolute rounded-full bg-white/40 animate-[float_5s_ease-in-out_infinite]"
-            style={{
-              left: p.left,
-              top: p.top,
-              width: p.size,
-              height: p.size,
-              animationDelay: p.delay,
-            }}
-          />
-        ))}
-      </div>
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-      {/* vignette */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,transparent_35%,rgba(0,0,0,0.55)_85%)]" />
+    let w = 0, h = 0;
+    const resize = () => {
+      w = canvas.width = Math.floor(window.innerWidth * devicePixelRatio);
+      h = canvas.height = Math.floor(window.innerHeight * devicePixelRatio);
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
+    };
+    resize();
+    window.addEventListener("resize", resize);
 
-      <div className="relative">{children}</div>
+    const n = 70;
+    const pts = Array.from({ length: n }).map(() => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.25 * devicePixelRatio,
+      vy: (Math.random() - 0.5) * 0.25 * devicePixelRatio,
+      r: (Math.random() * 1.6 + 0.8) * devicePixelRatio,
+    }));
 
-      <style jsx>{`
-        @keyframes float {
-          0% { transform: translateY(0px); opacity: 0.35; }
-          50% { transform: translateY(-10px); opacity: 0.7; }
-          100% { transform: translateY(0px); opacity: 0.35; }
+    let raf = 0;
+    const loop = () => {
+      ctx.clearRect(0, 0, w, h);
+
+      // subtle dots + connecting lines
+      for (let i = 0; i < n; i++) {
+        const p = pts[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0 || p.x > w) p.vx *= -1;
+        if (p.y < 0 || p.y > h) p.vy *= -1;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,255,255,0.10)";
+        ctx.fill();
+      }
+
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          const a = pts[i], b = pts[j];
+          const dx = a.x - b.x, dy = a.y - b.y;
+          const d = Math.sqrt(dx * dx + dy * dy);
+          if (d < 150 * devicePixelRatio) {
+            const alpha = 1 - d / (150 * devicePixelRatio);
+            ctx.strokeStyle = `rgba(255,255,255,${0.08 * alpha})`;
+            ctx.lineWidth = 1 * devicePixelRatio;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          }
         }
-      `}</style>
+      }
+
+      raf = requestAnimationFrame(loop);
+    };
+
+    raf = requestAnimationFrame(loop);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+
+  return (
+    <div className="pointer-events-none fixed inset-0 -z-10">
+      <div className="absolute inset-0 remi-gradient" />
+      <div className="absolute -top-40 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full remi-orb" />
+      <canvas ref={ref} className="absolute inset-0" />
     </div>
   );
 }
